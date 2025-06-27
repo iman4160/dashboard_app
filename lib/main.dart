@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sign In App',
+      debugShowCheckedModeBanner: false, // <--- ADD THIS LINE
       theme: ThemeData(
         // Define the primary color from the user's request
         primaryColor: const Color(0xFF1b9349), // Green

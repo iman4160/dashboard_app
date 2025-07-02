@@ -108,34 +108,54 @@ class _SpeakerScreenState extends State<SpeakerScreen> {
 
     if (item.isPlaying) {
       await item.player?.pause();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Paused: ${item.title}')),
+      );
     } else {
       try {
         if (item.processingState == ProcessingState.completed) {
           // If completed, seek to start before playing again
           await item.player?.seek(Duration.zero);
         }
+
+        // Set the audio source based on type
         if (item.type == AudioSourceType.asset) {
+          print('Attempting to load asset: ${item.url}');
           await item.player?.setAsset(item.url);
         } else if (item.type == AudioSourceType.network) {
+          print('Attempting to load network URL: ${item.url}');
           await item.player?.setUrl(item.url);
         } else if (item.type == AudioSourceType.deviceFile) {
           // For device file, ensure the path exists and is set
-          if (item.url.isEmpty || !await File(item.url).exists()) {
+          if (item.url.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Device file not found or not recorded yet.')),
+              const SnackBar(content: Text('Device file path is empty. Record audio first.')),
             );
             setState(() {
               item.updateProcessingState(ProcessingState.idle);
             });
             return;
           }
+          if (!await File(item.url).exists()) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Device file not found at: ${item.url}')),
+            );
+            setState(() {
+              item.updateProcessingState(ProcessingState.idle);
+            });
+            return;
+          }
+          print('Attempting to load device file: ${item.url}');
           await item.player?.setFilePath(item.url);
         }
         await item.player?.play();
-      } catch (e) {
-        print('Error playing audio from ${item.type}: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error playing audio: $e')),
+          SnackBar(content: Text('Playing: ${item.title}')),
+        );
+      } catch (e) {
+        print('Error playing audio from ${item.type} (${item.url}): $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing ${item.title}: $e')),
         );
         setState(() {
           item.updateProcessingState(ProcessingState.idle); // Reset state on error

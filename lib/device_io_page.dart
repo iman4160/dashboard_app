@@ -7,6 +7,8 @@ import 'package:dashboard/speaker_screen.dart';
 import 'package:dashboard/location_screen.dart';
 import 'package:dashboard/video_player_screen.dart';
 import 'package:dashboard/biometric_auth_screen.dart';
+import 'package:dashboard/video_screen.dart'; // NEW: Import VideoScreen
+import 'package:dashboard/video_gallery_screen.dart'; // NEW: Import VideoGalleryScreen
 
 
 class DeviceIOPage extends StatelessWidget {
@@ -100,6 +102,30 @@ class DeviceIOPage extends StatelessWidget {
                 color: accentBlue, // Blue
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoPlayerScreen()));
+                },
+              ),
+              const SizedBox(height: 15.0),
+
+              // NEW: Video Recorder Button (Green)
+              _buildDeviceIOButton(
+                context,
+                text: 'Video Recorder',
+                icon: Icons.videocam,
+                color: primaryGreen, // Green
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoScreen()));
+                },
+              ),
+              const SizedBox(height: 15.0),
+
+              // NEW: Video Gallery Button (Blue)
+              _buildDeviceIOButton(
+                context,
+                text: 'Video Gallery',
+                icon: Icons.video_library,
+                color: accentBlue, // Blue
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoGalleryScreen()));
                 },
               ),
               const SizedBox(height: 15.0),

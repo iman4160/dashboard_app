@@ -33,13 +33,14 @@ dependencies:
   get_storage: ^2.1.1
   intl: ^0.18.1
   camera: ^0.10.5+9 # For camera access
-  image_picker: ^1.0.4 # For gallery/camera image picking
   path_provider: ^2.1.1 # For saving images to local storage
   geolocator: ^11.0.0 # Add this line
   permission_handler: ^11.0.1 # For handling permissions
   record: ^6.0.0 # For audio recording
   just_audio: ^0.9.36 # For playing audio from various sources
   audio_session: ^0.1.18 # Recommended with just_audio for audio focus management
+  image_picker: ^1.1.2 # To pick images/videos from gallery or camera (kept the newer version)
+  video_player: ^2.8.2 # To play videos
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -69,3 +70,4 @@ flutter:
 
   assets:
     - audios/sample_audio.mp3
+    - videos/sample.mp4 # Ensure this path is correct and the file exists at this location

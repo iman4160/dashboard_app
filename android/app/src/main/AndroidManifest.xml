@@ -20,15 +20,15 @@
 
     <!-- Declares that this app uses a camera, but does not require it. -->
     <!-- This addresses the "Permission exists without corresponding hardware" warning. -->
-    <uses-feature android:name="android.hardware.camera" required="false" />
-    <uses-feature android:name="android.hardware.camera.autofocus" required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" /> <!-- Corrected: Added android:prefix -->
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" /> <!-- Corrected: Added android:prefix -->
 
 
     <application
         android:label="dashboard"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:requestLegacyExternalStorage="true"> <!-- NEW: Added for broader compatibility with external storage -->
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

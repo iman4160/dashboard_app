@@ -1,9 +1,7 @@
 // sign_in_page.dart
 import 'package:flutter/material.dart';
-// IMPORTANT: Replace 'flutter_app' with your actual project name, e.g., 'dashboard'
-// OR if home_page.dart is in the same 'lib' folder, you can use:
-// import 'home_page.dart';
-import 'package:dashboard/home_page.dart'; // Corrected import path, assuming project is 'dashboard'
+import 'package:dashboard/home_page.dart';
+import 'package:local_auth/local_auth.dart'; // NEW: Import local_auth
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -13,24 +11,22 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  // Controllers for text fields to get and set their values
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  // A boolean state variable to control the enabled/disabled state of the button
   bool _isSignInButtonEnabled = false;
+  final LocalAuthentication _localAuth = LocalAuthentication(); // NEW: LocalAuthentication instance
+  bool _canCheckBiometrics = false; // NEW: To store biometric availability status
 
   @override
   void initState() {
     super.initState();
-    // Add listeners to text controllers to react to changes in text
     _emailController.addListener(_validateFields);
     _passwordController.addListener(_validateFields);
+    _checkBiometrics(); // NEW: Check biometric availability on init
   }
 
   @override
   void dispose() {
-    // Dispose controllers to free up resources when the widget is removed
     _emailController.removeListener(_validateFields);
     _passwordController.removeListener(_validateFields);
     _emailController.dispose();
@@ -38,7 +34,6 @@ class _SignInPageState extends State<SignInPage> {
     super.dispose();
   }
 
-  // Validation method to check if both fields have content
   void _validateFields() {
     setState(() {
       _isSignInButtonEnabled =
@@ -46,14 +41,11 @@ class _SignInPageState extends State<SignInPage> {
     });
   }
 
-  // Function to handle sign-in logic (currently just prints to console)
   void _handleSignIn() {
-    // In a real app, you would integrate with authentication services (e.g., Firebase Auth) here
     if (_isSignInButtonEnabled) {
       print('Signing in with:');
       print('Email: ${_emailController.text}');
       print('Password: ${_passwordController.text}');
-      // Navigate to the HomePage upon successful sign-in
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -61,50 +53,98 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  // Function to handle "Create Account" navigation
   void _handleCreateAccount() {
     print('Navigating to create account page...');
-    // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => CreateAccountPage()));
+  }
+
+  // NEW: Check if biometrics are available and enrolled
+  Future<void> _checkBiometrics() async {
+    bool canCheckBiometrics = false;
+    try {
+      canCheckBiometrics = await _localAuth.canCheckBiometrics;
+    } catch (e) {
+      print("Error checking biometrics: $e");
+    }
+
+    // Check if any biometrics are enrolled (e.g., fingerprint, face)
+    bool hasEnrolledBiometrics = false;
+    if (canCheckBiometrics) {
+      List<BiometricType> availableBiometrics = await _localAuth.getAvailableBiometrics();
+      if (availableBiometrics.isNotEmpty) {
+        hasEnrolledBiometrics = true;
+      }
+    }
+
+    setState(() {
+      _canCheckBiometrics = canCheckBiometrics && hasEnrolledBiometrics;
+    });
+  }
+
+  // NEW: Authenticate user using biometrics
+  Future<void> _authenticateWithBiometrics() async {
+    bool authenticated = false;
+    try {
+      authenticated = await _localAuth.authenticate(
+        localizedReason: 'Scan your fingerprint to log in', // Message shown to user
+        options: const AuthenticationOptions(
+          stickyAuth: true, // Keep authentication session active
+          biometricOnly: true, // Only allow biometric authentication
+        ),
+      );
+    } catch (e) {
+      print("Error during biometric authentication: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Biometric authentication failed: ${e.toString()}')),
+      );
+    }
+
+    if (authenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric authentication successful!')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric authentication failed or cancelled.')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar with a title and the primary color from the theme
       appBar: AppBar(
         title: const Text(
           'Sign In',
           style: TextStyle(
-            color: Colors.white, // White text for AppBar title
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Theme.of(context).primaryColor, // Use the green primary color
-        elevation: 0, // No shadow for a cleaner look
+        backgroundColor: Theme.of(context).primaryColor,
+        elevation: 0,
         centerTitle: true,
       ),
-      // SafeArea to avoid UI elements being obscured by device notches/status bars
       body: SafeArea(
         child: SingleChildScrollView(
-          // Padding around the entire content for better spacing
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
-              // Align children to the center horizontally
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                // Logo or app icon (placeholder)
                 Center(
                   child: Icon(
-                    Icons.lock, // Example icon
+                    Icons.lock,
                     size: 100.0,
-                    color: Theme.of(context).primaryColor, // Green icon
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
-                const SizedBox(height: 32.0), // Spacing below the icon
+                const SizedBox(height: 32.0),
 
-                // Email Input Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -113,41 +153,65 @@ class _SignInPageState extends State<SignInPage> {
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email),
                   ),
-                  textInputAction: TextInputAction.next, // Go to next field on "done"
+                  textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: 20.0), // Spacing between fields
+                const SizedBox(height: 20.0),
 
-                // Password Input Field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true, // Hide password text
+                  obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Password',
                     hintText: 'Enter your password',
                     prefixIcon: Icon(Icons.lock),
                   ),
-                  textInputAction: TextInputAction.done, // "Done" action on keyboard
+                  textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) {
                     if (_isSignInButtonEnabled) {
-                      _handleSignIn(); // Call sign-in if button is enabled
+                      _handleSignIn();
                     }
                   },
                 ),
-                const SizedBox(height: 30.0), // Spacing before the button
+                const SizedBox(height: 30.0),
 
-                // Sign In Button
                 ElevatedButton(
-                  onPressed: _isSignInButtonEnabled ? _handleSignIn : null, // Disable if fields are empty
+                  onPressed: _isSignInButtonEnabled ? _handleSignIn : null,
                   child: const Text('Sign In'),
                 ),
-                const SizedBox(height: 20.0), // Spacing after the button
+                const SizedBox(height: 20.0),
 
-                // "Create Account" Text Link
+                // NEW: Biometric Login Button
+                if (_canCheckBiometrics) // Only show button if biometrics are available
+                  Column(
+                    children: [
+                      const SizedBox(height: 10.0),
+                      Text(
+                        'OR',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10.0),
+                      ElevatedButton.icon(
+                        onPressed: _authenticateWithBiometrics,
+                        icon: const Icon(Icons.fingerprint),
+                        label: const Text('Login with Biometrics'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary, // Use accent blue
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 20.0),
+
                 TextButton(
                   onPressed: _handleCreateAccount,
                   child: const Text(
                     "Don't have an account? Create one",
-                    // Use the accent color defined in MyApp for the link
                   ),
                 ),
               ],
